@@ -1,2 +1,3 @@
-# Focus
-Mouse Mouse By Keyboard
+开发工具，Visutl studio 2010
+
+该程序可通过设置的快捷键控制鼠标上移多少像素后再快速下移多少像素
