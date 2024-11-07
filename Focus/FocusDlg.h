@@ -11,12 +11,37 @@
 // 配置项
 struct Config {
 	std::string config_name;
-	int move_Up_times;					//上移动次数
-    int move_Up_pixel;					//每毫秒上推多少像素
-	int Interval;						//中间暂停间隔
-	int move_Down_times;				//每毫秒回正多少像素
-	int move_Down_pixel;				//下移动的像素	
-	std::string hotkey;					// 热键
+	int move_Up_times_left;					//上移动次数
+    int move_Up_pixel_left;					//每毫秒上推多少像素
+	int Interval_left;						//中间暂停间隔
+	int move_Down_times_left;				//每毫秒回正多少像素
+	int move_Down_pixel_left;				//下移动的像素	
+	std::string hotkey_left;					// 热键
+
+	int move_Up_times_right;					//上移动次数
+    int move_Up_pixel_right;					//每毫秒上推多少像素
+	int Interval_right;						//中间暂停间隔
+	int move_Down_times_right;				//每毫秒回正多少像素
+	int move_Down_pixel_right;				//下移动的像素	
+	std::string hotkey_right;					// 热键
+
+	Config()
+	{
+		config_name = "配置1";
+		move_Up_times_left = 10;
+		move_Up_pixel_left = 120;
+		Interval_left = 20;
+		move_Down_times_left = 10;
+		move_Down_pixel_left = 26;
+		hotkey_left = "R";
+
+		move_Up_times_right = 10;
+		move_Up_pixel_right = 600;
+		Interval_right = 20;
+		move_Down_times_right = 10;
+		move_Down_pixel_right = 200;
+		hotkey_right = "M";
+	}
 };
 
 // CFocusDlg 对话框
@@ -39,15 +64,14 @@ protected:
 
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();
-	void OnHotKeyPressed();
 	virtual HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
+	void OnHotKeyPressed(int key);
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnBnClickedCancel();
-	afx_msg LRESULT OnHotKey(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnLbnDblclkList1();
@@ -61,17 +85,20 @@ public:
 	int	m_HotKey;
 	CListBox m_listConfig;
 	CButton  m_button;
-	CEdit  m_Editbox[8];
+	CEdit  m_Editbox[14];
 	POINT	 m_beginPos;
 	void ReadConfig();
 	void SaveConfig();
 	void SetEditText(Config config);
+	int GetLeftHotKeyNum();
+	int GetRightHotKeyNum();
 	std::vector<Config> m_VecConfig;
 	int m_nUp;
 	int m_nDown;
 	CStatic m_staticText;
 	CStatic m_CurSelectText;
-	CStatic m_URLText;
+	CStatic m_URLText_left;
+	CStatic m_URLText_right;
 	CEdit m_editName;
 	std::map<std::string, int> m_keyMap;
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
@@ -85,5 +112,12 @@ public:
 	afx_msg void OnEnChangeEdit6();
 	afx_msg void OnEnChangeEdit7();
 	afx_msg void OnEnChangeEdit8();
+	afx_msg void OnEnChangeEdit9();
+	afx_msg void OnEnChangeEdit10();
+	afx_msg void OnEnChangeEdit11();
+	afx_msg void OnEnChangeEdit12();
+	afx_msg void OnEnChangeEdit13();
+	afx_msg void OnEnChangeEdit14();
 	afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
+	afx_msg void OnClose();
 };

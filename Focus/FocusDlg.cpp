@@ -14,6 +14,42 @@
 #endif
 
 
+HHOOK g_hHook = NULL;
+
+// 键盘钩子的回调函数
+LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
+    if (nCode == HC_ACTION) {
+        // 检查按下的键
+        if (wParam == WM_KEYDOWN) {
+            KBDLLHOOKSTRUCT* pKeyboard = (KBDLLHOOKSTRUCT*)lParam;
+            //std::cout << "Key Pressed: " << pKeyboard->vkCode << std::endl; // 打印按下的键
+			CFocusDlg* dlg = static_cast<CFocusDlg*>(theApp.m_pMainWnd);
+			if(dlg)
+			{
+				if(pKeyboard->vkCode == dlg->GetLeftHotKeyNum() || pKeyboard->vkCode == dlg->GetRightHotKeyNum())
+					dlg->OnHotKeyPressed(pKeyboard->vkCode);
+			}
+        }
+    }
+    return CallNextHookEx(g_hHook, nCode, wParam, lParam);
+}
+
+// 设置钩子
+void SetKeyboardHook() {
+    g_hHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardProc, NULL, 0); // 设置低级键盘钩子
+    if (g_hHook == NULL) {
+        std::cerr << "Failed to set keyboard hook!" << std::endl;
+    }
+}
+
+// 移除钩子
+void RemoveKeyboardHook() {
+    if (g_hHook != NULL) {
+        UnhookWindowsHookEx(g_hHook);
+        g_hHook = NULL;
+    }
+}
+
 // CFocusDlg 对话框
 
 // 定义定时器的ID
@@ -23,26 +59,40 @@ const char* CONFIG_FILE = "config.txt"; // 配置文件路径
 // 从配置文件读取设置
 void CFocusDlg::ReadConfig() 
 {
-	Config config = {"配置1", 10, 120, 20, 10, 26, "R"}; // 默认设置
+	Config config;
     std::ifstream inFile(CONFIG_FILE);
 	if (!inFile.is_open())
 	{
 		m_VecConfig.push_back(config);
 		m_listConfig.AddString(config.config_name.c_str());
 		CString str;
-		str.Format("%d",config.move_Up_times);
+		str.Format("%d",config.move_Up_times_left);
 		m_Editbox[2].SetWindowTextA(str.GetString());
-		str.Format("%d",config.move_Up_pixel);
+		str.Format("%d",config.move_Up_pixel_left);
 		m_Editbox[3].SetWindowTextA(str.GetString());
-		str.Format("%d",config.Interval);
+		str.Format("%d",config.Interval_left);
 		m_Editbox[4].SetWindowTextA(str.GetString());
-		str.Format("%d",config.move_Down_times);
+		str.Format("%d",config.move_Down_times_left);
 		m_Editbox[5].SetWindowTextA(str.GetString());
-		str.Format("%d",config.move_Down_pixel);
+		str.Format("%d",config.move_Down_pixel_left);
 		m_Editbox[6].SetWindowTextA(str.GetString());
 
-		str.Format("%s",config.hotkey.c_str());
+		str.Format("%s",config.hotkey_left.c_str());
 		m_Editbox[7].SetWindowTextA(str.GetString());
+
+		str.Format("%d",config.move_Up_times_right);
+		m_Editbox[8].SetWindowTextA(str.GetString());
+		str.Format("%d",config.move_Up_pixel_right);
+		m_Editbox[9].SetWindowTextA(str.GetString());
+		str.Format("%d",config.Interval_right);
+		m_Editbox[10].SetWindowTextA(str.GetString());
+		str.Format("%d",config.move_Down_times_right);
+		m_Editbox[11].SetWindowTextA(str.GetString());
+		str.Format("%d",config.move_Down_pixel_right);
+		m_Editbox[12].SetWindowTextA(str.GetString());
+
+		str.Format("%s",config.hotkey_right.c_str());
+		m_Editbox[13].SetWindowTextA(str.GetString());
 
 		m_listConfig.SetCurSel(0);
 
@@ -52,7 +102,7 @@ void CFocusDlg::ReadConfig()
 	}
 	m_VecConfig.clear();
 	while (inFile.good()) {
-		inFile >> config.config_name >> config.move_Up_times >> config.move_Up_pixel >> config.Interval >> config.move_Down_times >> config.move_Down_pixel >> config.hotkey;
+		inFile >> config.config_name >> config.move_Up_times_left >> config.move_Up_pixel_left >> config.Interval_left >> config.move_Down_times_left >> config.move_Down_pixel_left >> config.hotkey_left >> config.move_Up_times_right >> config.move_Up_pixel_right >> config.Interval_right >> config.move_Down_times_right >> config.move_Down_pixel_right >> config.hotkey_right;
 		m_VecConfig.push_back(config);
     }
 	inFile.close();
@@ -63,18 +113,32 @@ void CFocusDlg::ReadConfig()
 		if(i == 0)
 		{
 			CString str;
-			str.Format("%d",m_VecConfig[0].move_Up_times);
+			str.Format("%d",m_VecConfig[0].move_Up_times_left);
 			m_Editbox[2].SetWindowTextA(str.GetString());
-			str.Format("%d",m_VecConfig[0].move_Up_pixel);
+			str.Format("%d",m_VecConfig[0].move_Up_pixel_left);
 			m_Editbox[3].SetWindowTextA(str.GetString());
-			str.Format("%d",m_VecConfig[0].Interval);
+			str.Format("%d",m_VecConfig[0].Interval_left);
 			m_Editbox[4].SetWindowTextA(str.GetString());
-			str.Format("%d",m_VecConfig[0].move_Down_times);
+			str.Format("%d",m_VecConfig[0].move_Down_times_left);
 			m_Editbox[5].SetWindowTextA(str.GetString());
-			str.Format("%d",m_VecConfig[0].move_Down_pixel);
+			str.Format("%d",m_VecConfig[0].move_Down_pixel_left);
 			m_Editbox[6].SetWindowTextA(str.GetString());
-			str.Format("%s",m_VecConfig[0].hotkey.c_str());
+			str.Format("%s",m_VecConfig[0].hotkey_left.c_str());
 			m_Editbox[7].SetWindowTextA(str.GetString());
+
+			str.Format("%d",m_VecConfig[0].move_Up_times_right);
+			m_Editbox[8].SetWindowTextA(str.GetString());
+			str.Format("%d",m_VecConfig[0].move_Up_pixel_left);
+			m_Editbox[9].SetWindowTextA(str.GetString());
+			str.Format("%d",m_VecConfig[0].Interval_right);
+			m_Editbox[10].SetWindowTextA(str.GetString());
+			str.Format("%d",m_VecConfig[0].move_Down_times_right);
+			m_Editbox[11].SetWindowTextA(str.GetString());
+			str.Format("%d",m_VecConfig[0].move_Down_pixel_right);
+			m_Editbox[12].SetWindowTextA(str.GetString());
+			str.Format("%s",m_VecConfig[0].hotkey_right.c_str());
+			m_Editbox[13].SetWindowTextA(str.GetString());
+
 			m_listConfig.SetCurSel(i);
 
 			str.Format("当前配置：%s",config.config_name.c_str());
@@ -89,9 +153,9 @@ void CFocusDlg::SaveConfig()
 	for(size_t i = 0; i < m_VecConfig.size(); i++)
 	{
 		if(i == m_VecConfig.size() -1)
-			inFile << m_VecConfig[i].config_name << " " << m_VecConfig[i].move_Up_times << " " << m_VecConfig[i].move_Up_pixel << " " << m_VecConfig[i].Interval << " " << m_VecConfig[i].move_Down_times << " " << m_VecConfig[i].move_Down_pixel << " " << m_VecConfig[i].hotkey ;
+			inFile << m_VecConfig[i].config_name << " " << m_VecConfig[i].move_Up_times_left << " " << m_VecConfig[i].move_Up_pixel_left << " " << m_VecConfig[i].Interval_left << " " << m_VecConfig[i].move_Down_times_left << " " << m_VecConfig[i].move_Down_pixel_left << " " << m_VecConfig[i].hotkey_left << " " << m_VecConfig[i].move_Up_times_right << " " << m_VecConfig[i].move_Up_pixel_right << " " << m_VecConfig[i].Interval_right << " " << m_VecConfig[i].move_Down_times_right << " " << m_VecConfig[i].move_Down_pixel_right << " " << m_VecConfig[i].hotkey_right;
 		else
-			inFile << m_VecConfig[i].config_name << " " << m_VecConfig[i].move_Up_times << " " << m_VecConfig[i].move_Up_pixel << " " << m_VecConfig[i].Interval << " " << m_VecConfig[i].move_Down_times << " " << m_VecConfig[i].move_Down_pixel << " " << m_VecConfig[i].hotkey <<std::endl;
+			inFile << m_VecConfig[i].config_name << " " << m_VecConfig[i].move_Up_times_left << " " << m_VecConfig[i].move_Up_pixel_left << " " << m_VecConfig[i].Interval_left << " " << m_VecConfig[i].move_Down_times_left << " " << m_VecConfig[i].move_Down_pixel_left << " " << m_VecConfig[i].hotkey_left << " " << m_VecConfig[i].move_Up_times_right << " " << m_VecConfig[i].move_Up_pixel_right << " " << m_VecConfig[i].Interval_right << " " << m_VecConfig[i].move_Down_times_right << " " << m_VecConfig[i].move_Down_pixel_right << " " << m_VecConfig[i].hotkey_right <<std::endl;
 	}
 	inFile.close();
 }
@@ -147,15 +211,23 @@ void CFocusDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT6, m_Editbox[5]);
 	DDX_Control(pDX, IDC_EDIT7, m_Editbox[6]);
 	DDX_Control(pDX, IDC_EDIT8, m_Editbox[7]);
+
+	DDX_Control(pDX, IDC_EDIT9,	 m_Editbox[8]);
+	DDX_Control(pDX, IDC_EDIT10, m_Editbox[9]);
+	DDX_Control(pDX, IDC_EDIT11, m_Editbox[10]);
+	DDX_Control(pDX, IDC_EDIT12, m_Editbox[11]);
+	DDX_Control(pDX, IDC_EDIT13, m_Editbox[12]);
+	DDX_Control(pDX, IDC_EDIT14, m_Editbox[13]);
+
 	DDX_Control(pDX, IDC_STATIC2, m_staticText);
 	DDX_Control(pDX, IDC_STATIC1, m_CurSelectText);
-	DDX_Control(pDX, IDC_STATIC3, m_URLText);
+	DDX_Control(pDX, IDC_STATIC3, m_URLText_left);
+	DDX_Control(pDX, IDC_STATIC4, m_URLText_right);
 }
 
 BEGIN_MESSAGE_MAP(CFocusDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_KEYUP()
-	ON_MESSAGE(WM_HOTKEY, &CFocusDlg::OnHotKey)
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDOK, &CFocusDlg::OnBnClickedOk)
 	ON_BN_CLICKED(IDCANCEL, &CFocusDlg::OnBnClickedCancel)
@@ -172,8 +244,15 @@ BEGIN_MESSAGE_MAP(CFocusDlg, CDialogEx)
 	ON_EN_CHANGE(IDC_EDIT5, &CFocusDlg::OnEnChangeEdit5)
 	ON_EN_CHANGE(IDC_EDIT6, &CFocusDlg::OnEnChangeEdit6)
 	ON_EN_CHANGE(IDC_EDIT7, &CFocusDlg::OnEnChangeEdit7)
-	ON_EN_CHANGE(IDC_EDIT8, &CFocusDlg::OnEnChangeEdit8)	
+	ON_EN_CHANGE(IDC_EDIT8, &CFocusDlg::OnEnChangeEdit8)
+	ON_EN_CHANGE(IDC_EDIT9, &CFocusDlg::OnEnChangeEdit9)
+	ON_EN_CHANGE(IDC_EDIT10, &CFocusDlg::OnEnChangeEdit10)
+	ON_EN_CHANGE(IDC_EDIT11, &CFocusDlg::OnEnChangeEdit11)
+	ON_EN_CHANGE(IDC_EDIT12, &CFocusDlg::OnEnChangeEdit12)
+	ON_EN_CHANGE(IDC_EDIT13, &CFocusDlg::OnEnChangeEdit13)
+	ON_EN_CHANGE(IDC_EDIT14, &CFocusDlg::OnEnChangeEdit14)
 	ON_WM_HELPINFO()
+	ON_WM_CLOSE()
 END_MESSAGE_MAP()
 
 
@@ -191,6 +270,14 @@ BOOL CFocusDlg::OnInitDialog()
 	// TODO: 在此添加额外的初始化代码
 	ReadConfig();
 
+	//注册钩子
+	SetKeyboardHook();
+
+	CFont font;
+    font.CreatePointFont(180, _T("Arial")); // 字体大小为 18 pt
+
+	//m_staticText.SetFont(&font);
+	//m_CurSelectText.SetFont(&font);
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -208,15 +295,19 @@ HBRUSH CFocusDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor) {
 	{
 		pDC->SetTextColor(RGB(0, 155, 0)); // 绿色
 	}
-	if (pWnd->GetDlgCtrlID() == IDC_STATIC3)
+	if (pWnd->GetDlgCtrlID() == IDC_STATIC3 || pWnd->GetDlgCtrlID() == IDC_STATIC4)
 	{
-		pDC->SetTextColor(RGB(0, 0, 200)); // 绿色
+		pDC->SetTextColor(RGB(0, 0, 200)); // 蓝色
+	}
+	if (pWnd->GetDlgCtrlID() == IDC_STATIC5 || pWnd->GetDlgCtrlID() == IDC_STATIC6)
+	{
+		pDC->SetTextColor(RGB(255, 0, 0)); // 红色
 	}
 	return hbr;
 }
 
 
-void CFocusDlg::OnHotKeyPressed()
+void CFocusDlg::OnHotKeyPressed(int key)
 {
     if (m_bIsRunning || m_bActive == false)
     {
@@ -225,6 +316,7 @@ void CFocusDlg::OnHotKeyPressed()
     }
 
     m_bIsRunning = TRUE;
+	m_HotKey = key;
 	GetCursorPos(&m_beginPos); 
 
     // 在此添加您要执行的任务代码
@@ -319,19 +411,43 @@ void CFocusDlg::OnTimer(UINT_PTR nIDEvent)
        // 定时器事件处理代码
 		if(m_bIsRunning == true)
 		{
+			int move_up_times = 0;
+			int up_pixel = 0;
+			int Interval = 0;
+			int move_down_times = 0;
+			int down_pixel = 0;
+			
 			CString str;
-			m_Editbox[2].GetWindowTextA(str);
-			int move_up_times = atoi(str.GetString());
-			m_Editbox[3].GetWindowTextA(str);
-			int up_pixel = atoi(str.GetString());
+			if (m_HotKey == GetLeftHotKeyNum())
+			{
+				m_Editbox[2].GetWindowTextA(str);
+				move_up_times = atoi(str.GetString());
+				m_Editbox[3].GetWindowTextA(str);
+				up_pixel = atoi(str.GetString());
 
-			m_Editbox[4].GetWindowTextA(str);
-			int Interval = atoi(str.GetString());
+				m_Editbox[4].GetWindowTextA(str);
+				Interval = atoi(str.GetString());
 
-			m_Editbox[5].GetWindowTextA(str);
-			int move_down_times = atoi(str.GetString());
-			m_Editbox[6].GetWindowTextA(str);
-			int down_pixel = atoi(str.GetString());
+				m_Editbox[5].GetWindowTextA(str);
+				move_down_times = atoi(str.GetString());
+				m_Editbox[6].GetWindowTextA(str);
+				down_pixel = atoi(str.GetString());
+			}
+			else if(m_HotKey == GetRightHotKeyNum())
+			{
+				m_Editbox[8].GetWindowTextA(str);
+				move_up_times = atoi(str.GetString());
+				m_Editbox[9].GetWindowTextA(str);
+				up_pixel = atoi(str.GetString());
+
+				m_Editbox[10].GetWindowTextA(str);
+				Interval = atoi(str.GetString());
+
+				m_Editbox[11].GetWindowTextA(str);
+				move_down_times = atoi(str.GetString());
+				m_Editbox[12].GetWindowTextA(str);
+				down_pixel = atoi(str.GetString());
+			}
 
 			POINT p;
 			GetCursorPos(&p);
@@ -380,32 +496,15 @@ void CFocusDlg::OnTimer(UINT_PTR nIDEvent)
     CDialogEx::OnTimer(nIDEvent);
 }
 
-LRESULT  CFocusDlg::OnHotKey(WPARAM wParam, LPARAM lParam)
-{
-    if (wParam == 100)
-    {
-        OnHotKeyPressed();
-    }
-	return 0; // 返回0表示消息已被处理
-}
-
 void CFocusDlg::OnBnClickedOk()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	UnregisterHotKey(m_hWnd, 100);
 	if(m_bActive == false)
 	{		
 		SetTimer(TIMER_ID, 1, NULL);
 		m_button.SetWindowTextA("暂停");
 		m_bActive = true;
 		m_staticText.SetWindowText("已 激 活");
-		
-		CString str;
-		m_Editbox[7].GetWindowTextA(str);
-
-		// 注册快捷键，例如 'R' 键
-		int hotkey = m_keyMap[str.GetString()];
-		RegisterHotKey(m_hWnd, 100, 0, hotkey);  // 'm_HotKey' 是用户选择的快捷键
 	}
 	else
 	{
@@ -436,28 +535,32 @@ void CFocusDlg::OnLbnSelchangeList1()
 	if(index < 0 || index >= (int)m_VecConfig.size())
 		return;
 	CString str;
-	str.Format("%d",m_VecConfig[index].move_Up_times);
+	str.Format("%d",m_VecConfig[index].move_Up_times_left);
 	m_Editbox[2].SetWindowTextA(str.GetString());
-	str.Format("%d",m_VecConfig[index].move_Up_pixel);
+	str.Format("%d",m_VecConfig[index].move_Up_pixel_left);
 	m_Editbox[3].SetWindowTextA(str.GetString());
-	str.Format("%d",m_VecConfig[index].Interval);
+	str.Format("%d",m_VecConfig[index].Interval_left);
 	m_Editbox[4].SetWindowTextA(str.GetString());
-	str.Format("%d",m_VecConfig[index].move_Down_times);
+	str.Format("%d",m_VecConfig[index].move_Down_times_left);
 	m_Editbox[5].SetWindowTextA(str.GetString());
-	str.Format("%d",m_VecConfig[index].move_Down_pixel);
+	str.Format("%d",m_VecConfig[index].move_Down_pixel_left);
 	m_Editbox[6].SetWindowTextA(str.GetString());
-	str.Format("%s",m_VecConfig[index].hotkey.c_str());
+	str.Format("%s",m_VecConfig[index].hotkey_left.c_str());
 	m_Editbox[7].SetWindowTextA(str.GetString());
 
-	if(m_bActive == false)
-	{
-		UnregisterHotKey(m_hWnd, 100);
-		m_Editbox[7].GetWindowTextA(str);
+	str.Format("%d",m_VecConfig[index].move_Up_times_right);
+	m_Editbox[8].SetWindowTextA(str.GetString());
+	str.Format("%d",m_VecConfig[index].move_Up_pixel_right);
+	m_Editbox[9].SetWindowTextA(str.GetString());
+	str.Format("%d",m_VecConfig[index].Interval_right);
+	m_Editbox[10].SetWindowTextA(str.GetString());
+	str.Format("%d",m_VecConfig[index].move_Down_times_right);
+	m_Editbox[11].SetWindowTextA(str.GetString());
+	str.Format("%d",m_VecConfig[index].move_Down_pixel_right);
+	m_Editbox[12].SetWindowTextA(str.GetString());
+	str.Format("%s",m_VecConfig[index].hotkey_right.c_str());
+	m_Editbox[13].SetWindowTextA(str.GetString());
 
-		// 注册快捷键，例如 'R' 键
-		int hotkey = m_keyMap[str.GetString()];
-		RegisterHotKey(m_hWnd, 100, 0, hotkey);  // 'm_HotKey' 是用户选择的快捷键
-	}
 	CString select;
 	m_listConfig.GetText(index, select);
 	str.Format("当前配置：%s",select.GetString());
@@ -479,7 +582,7 @@ void CFocusDlg::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	 // 检查点击位置是否在CStatic控件内
     CRect rectStatic;
-    m_URLText.GetWindowRect(&rectStatic); // 替换m_staticControl为你的CStatic控件的成员变量
+    m_URLText_left.GetWindowRect(&rectStatic); // 替换m_staticControl为你的CStatic控件的成员变量
     ScreenToClient(&rectStatic);
 
     if (rectStatic.PtInRect(point))
@@ -487,7 +590,17 @@ void CFocusDlg::OnLButtonDown(UINT nFlags, CPoint point)
         // 点击位置在CStatic控件内，打开网页
         ShellExecute(NULL, _T("open"), _T("https://www.zqgame.com"), NULL, NULL, SW_SHOWNORMAL);
 		return;
-    }
+	}
+	m_URLText_right.GetWindowRect(&rectStatic); // 替换m_staticControl为你的CStatic控件的成员变量
+	ScreenToClient(&rectStatic);
+
+	if (rectStatic.PtInRect(point))
+	{
+		// 点击位置在CStatic控件内，打开网页
+		ShellExecute(NULL, _T("open"), _T("https://www.zqgmae.com"), NULL, NULL, SW_SHOWNORMAL);
+		return;
+	}
+
 
     // 你的代码逻辑
 	CString strText;
@@ -495,7 +608,7 @@ void CFocusDlg::OnLButtonDown(UINT nFlags, CPoint point)
 	if(strText == "")
 		return;
 	m_listConfig.AddString(strText);
-	Config config = {"配置1", 10, 120, 20, 10, 26, "R"}; // 默认设置
+	Config config;
 	config.config_name = strText.GetString();
 	m_VecConfig.push_back(config);
 	int count = m_listConfig.GetCount();
@@ -535,26 +648,38 @@ void CFocusDlg::OnBnClickedButton_Default()
 	int index = m_listConfig.GetCurSel();
 	if(index <= -1)
 		return;
-	Config config = {"配置1", 10, 120, 20, 10, 26, "R"}; // 默认设置
+	Config config;
 	SetEditText(config);
 }
 
 void CFocusDlg::SetEditText(Config config)
 {
 	CString str;
-	str.Format("%d",config.move_Up_times);
+	str.Format("%d",config.move_Up_times_left);
 	m_Editbox[2].SetWindowTextA(str.GetString());
-	str.Format("%d",config.move_Up_pixel);
+	str.Format("%d",config.move_Up_pixel_left);
 	m_Editbox[3].SetWindowTextA(str.GetString());
-	str.Format("%d",config.Interval);
+	str.Format("%d",config.Interval_left);
 	m_Editbox[4].SetWindowTextA(str.GetString());
-	str.Format("%d",config.move_Down_times);
+	str.Format("%d",config.move_Down_times_left);
 	m_Editbox[5].SetWindowTextA(str.GetString());
-	str.Format("%d",config.move_Down_pixel);
+	str.Format("%d",config.move_Down_pixel_left);
 	m_Editbox[6].SetWindowTextA(str.GetString());
-
-	str.Format("%s",config.hotkey.c_str());
+	str.Format("%s",config.hotkey_left.c_str());
 	m_Editbox[7].SetWindowTextA(str.GetString());
+
+	str.Format("%d",config.move_Up_times_right);
+	m_Editbox[8].SetWindowTextA(str.GetString());
+	str.Format("%d",config.move_Up_pixel_right);
+	m_Editbox[9].SetWindowTextA(str.GetString());
+	str.Format("%d",config.Interval_right);
+	m_Editbox[10].SetWindowTextA(str.GetString());
+	str.Format("%d",config.move_Down_times_right);
+	m_Editbox[11].SetWindowTextA(str.GetString());
+	str.Format("%d",config.move_Down_pixel_right);
+	m_Editbox[12].SetWindowTextA(str.GetString());
+	str.Format("%s",config.hotkey_right.c_str());
+	m_Editbox[13].SetWindowTextA(str.GetString());
 }
 BOOL CFocusDlg::PreTranslateMessage(MSG* pMsg)
 {
@@ -566,7 +691,7 @@ BOOL CFocusDlg::PreTranslateMessage(MSG* pMsg)
 		if(strText != "")
 		{
 			m_listConfig.AddString(strText);
-			Config config = {"配置1", 10, 120, 20, 10, 26, "R"}; // 默认设置
+			Config config;
 			config.config_name = strText.GetString();
 			m_VecConfig.push_back(config);
 			int count = m_listConfig.GetCount();
@@ -606,7 +731,7 @@ void CFocusDlg::OnEnChangeEdit3()
 	int value = atoi(str.GetString());
 	if(value > 0)
 	{
-		m_VecConfig[index].move_Up_times = value;
+		m_VecConfig[index].move_Up_times_left = value;
 		SaveConfig();
 	}
 }
@@ -624,7 +749,7 @@ void CFocusDlg::OnEnChangeEdit4()
 	int value = atoi(str.GetString());
 	if(value > 0)
 	{
-		m_VecConfig[index].move_Up_pixel = value;
+		m_VecConfig[index].move_Up_pixel_left = value;
 		SaveConfig();
 	}
 }
@@ -642,7 +767,7 @@ void CFocusDlg::OnEnChangeEdit5()
 	int value = atoi(str.GetString());
 	if(value > 0)
 	{
-		m_VecConfig[index].Interval = value;
+		m_VecConfig[index].Interval_left = value;
 		SaveConfig();
 	}
 }
@@ -660,7 +785,7 @@ void CFocusDlg::OnEnChangeEdit6()
 	int value = atoi(str.GetString());
 	if(value > 0)
 	{
-		m_VecConfig[index].move_Down_times = value;
+		m_VecConfig[index].move_Down_times_left = value;
 		SaveConfig();
 	}
 }
@@ -678,7 +803,7 @@ void CFocusDlg::OnEnChangeEdit7()
 	int value = atoi(str.GetString());
 	if(value > 0)
 	{
-		m_VecConfig[index].move_Down_pixel = value;
+		m_VecConfig[index].move_Down_pixel_left = value;
 		SaveConfig();
 	}
 }
@@ -706,7 +831,7 @@ void CFocusDlg::OnEnChangeEdit8()
 			// 将编辑控件的焦点设置回到开始位置
 			m_Editbox[7].SetSel(0, 1);
 		}
-		m_VecConfig[index].hotkey = str;
+		m_VecConfig[index].hotkey_left = str;
 		SaveConfig();
 	}
 	else
@@ -717,10 +842,160 @@ void CFocusDlg::OnEnChangeEdit8()
 	}
 }
 
-//取消F1 弹帮助窗口
+void CFocusDlg::OnEnChangeEdit9()
+{
+	const int index = m_listConfig.GetCurSel();
+	if(index < 0 || index >= (int)m_VecConfig.size())
+		return;
+	CString str;
+	m_Editbox[8].GetWindowTextA(str);
+	if(str == "")
+		return;
+	int value = atoi(str.GetString());
+	if(value > 0)
+	{
+		m_VecConfig[index].move_Up_times_right = value;
+		SaveConfig();
+	}
+}
+
+
+void CFocusDlg::OnEnChangeEdit10()
+{
+	const int index = m_listConfig.GetCurSel();
+	if(index < 0 || index >= (int)m_VecConfig.size())
+		return;
+	CString str;
+	m_Editbox[9].GetWindowTextA(str);
+	if(str == "")
+		return;
+	int value = atoi(str.GetString());
+	if(value > 0)
+	{
+		m_VecConfig[index].move_Up_pixel_right = value;
+		SaveConfig();
+	}
+}
+
+
+void CFocusDlg::OnEnChangeEdit11()
+{
+	const int index = m_listConfig.GetCurSel();
+	if(index < 0 || index >= (int)m_VecConfig.size())
+		return;
+	CString str;
+	m_Editbox[10].GetWindowTextA(str);
+	if(str == "")
+		return;
+	int value = atoi(str.GetString());
+	if(value > 0)
+	{
+		m_VecConfig[index].Interval_right = value;
+		SaveConfig();
+	}
+}
+
+
+void CFocusDlg::OnEnChangeEdit12()
+{
+	const int index = m_listConfig.GetCurSel();
+	if(index < 0 || index >= (int)m_VecConfig.size())
+		return;
+	CString str;
+	m_Editbox[11].GetWindowTextA(str);
+	if(str == "")
+		return;
+	int value = atoi(str.GetString());
+	if(value > 0)
+	{
+		m_VecConfig[index].move_Down_times_right = value;
+		SaveConfig();
+	}
+}
+
+
+void CFocusDlg::OnEnChangeEdit13()
+{
+	const int index = m_listConfig.GetCurSel();
+	if(index < 0 || index >= (int)m_VecConfig.size())
+		return;
+	CString str;
+	m_Editbox[12].GetWindowTextA(str);
+	if(str == "")
+		return;
+	int value = atoi(str.GetString());
+	if(value > 0)
+	{
+		m_VecConfig[index].move_Down_pixel_right = value;
+		SaveConfig();
+	}
+}
+
+
+void CFocusDlg::OnEnChangeEdit14()
+{
+	const int index = m_listConfig.GetCurSel();
+	if(index < 0 || index >= (int)m_VecConfig.size())
+		return;
+	CString str;
+	m_Editbox[13].GetWindowText(str);
+	if(str == "")
+		return;
+	std::string sChar = str.GetString();
+	int asciiValue = static_cast<int>(sChar[0]);
+	if((asciiValue >= 'A' && asciiValue <= 'Z') || (asciiValue >= 'a' && asciiValue <= 'z'))
+	{
+		// 如果输入超过一个字符，将其截断
+		int len = str.GetLength();
+		if (str.GetLength() > 1)
+		{
+			str = str.Left(1);
+			m_Editbox[7].SetWindowText(str);
+			// 将编辑控件的焦点设置回到开始位置
+			m_Editbox[7].SetSel(0, 1);
+		}
+		m_VecConfig[index].hotkey_right = str;
+		SaveConfig();
+	}
+	else
+	{
+		m_Editbox[13].SetWindowText("");
+		m_Editbox[13].SetSel(0, 0);
+		return;
+	}
+}
+
+int CFocusDlg::GetLeftHotKeyNum()
+{
+	CString str;
+	m_Editbox[7].GetWindowTextA(str);
+	// 注册快捷键，例如 'R' 键
+	int hotkey = m_keyMap[str.GetString()];
+	return hotkey;
+}
+
+int CFocusDlg::GetRightHotKeyNum()
+{
+	CString str;
+	m_Editbox[13].GetWindowTextA(str);
+	int hotkey = m_keyMap[str.GetString()];
+	return hotkey;
+}
+
+
 BOOL CFocusDlg::OnHelpInfo(HELPINFO* pHelpInfo)
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
+	//取消F1的帮助消息按键
 	return TRUE;
 	//return CDialogEx::OnHelpInfo(pHelpInfo);
+}
+
+
+void CFocusDlg::OnClose()
+{
+	// TODO: 在此添加消息处理程序代码和/或调用默认值
+	//关闭窗口注销钩子
+	RemoveKeyboardHook();
+	CDialogEx::OnClose();
 }
