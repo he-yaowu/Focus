@@ -365,26 +365,6 @@ HCURSOR CFocusDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-
-void CFocusDlg::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
-{
-	 // 处理键盘按键释放事件
-    // nChar 参数包含了被释放的键的虚拟键码
-    // nRepCnt 参数表示按键被按住然后释放的次数
-    // nFlags 参数包含了额外的信息，例如是否同时按下了Shift键
-
-    // 例如，可以在这里根据nChar的值来执行不同的操作
-    switch(nChar)
-    {
-        case 'A':
-            // 处理'A'键被释放的事件
-            break;
-        // ... 其他case处理 ...
-    }
-
-	CDialogEx::OnKeyUp(nChar, nRepCnt, nFlags);
-}
-
 // 移动鼠标
 void MoveMouseUp(int yOffset) 
 {
