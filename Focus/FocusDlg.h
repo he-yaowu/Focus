@@ -72,35 +72,9 @@ public:
 	void OnHotKeyPressed(int key);
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnBnClickedCancel();
-	afx_msg void OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnLbnDblclkList1();
 	afx_msg void OnLbnSelchangeList1();
-	bool m_bIsRunning;
-	bool m_bActive;
-	bool m_bUpComplete;
-	bool m_bDownComplete;
-	bool m_bInterval;
-	long m_timeUpcomplete;
-	int	m_HotKey;
-	CListBox m_listConfig;
-	CButton  m_button;
-	CEdit  m_Editbox[14];
-	POINT	 m_beginPos;
-	void ReadConfig();
-	void SaveConfig();
-	void SetEditText(Config config);
-	int GetLeftHotKeyNum();
-	int GetRightHotKeyNum();
-	std::vector<Config> m_VecConfig;
-	int m_nUp;
-	int m_nDown;
-	CStatic m_staticText;
-	CStatic m_CurSelectText;
-	CStatic m_URLText_left;
-	CStatic m_URLText_right;
-	CEdit m_editName;
-	std::map<std::string, int> m_keyMap;
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnBnClickedButton_New();
 	afx_msg void OnBnClickedButton_Delete();
@@ -120,4 +94,30 @@ public:
 	afx_msg void OnEnChangeEdit14();
 	afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
 	afx_msg void OnClose();
+
+	bool m_bIsRunning;
+	bool m_bActive;
+	bool m_bUpComplete;
+	bool m_bDownComplete;
+	bool m_bInterval;
+	long m_timeUpcomplete;
+	int	m_HotKey;
+	CListBox m_listConfig;
+	CButton  m_button;
+	CEdit  m_Editbox[14];
+	POINT	 m_beginPos;
+	void ReadConfig();
+	void SaveConfig();
+	void SetEditText(Config config);
+	int GetLeftHotKeyNum();
+	int GetRightHotKeyNum();
+	std::vector<Config> m_VecConfig;
+	int m_nUp;
+	int m_nDown;
+	CStatic m_staticText;				//未激活，已激活
+	CStatic m_CurSelectText;			//当前选择的配置
+	CStatic m_URLText_left;
+	CStatic m_URLText_right;
+	CEdit m_editName;					//创建配置输入配置名
+	std::map<std::string, int> m_keyMap;
 };
